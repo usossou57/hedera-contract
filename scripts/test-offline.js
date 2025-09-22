@@ -251,6 +251,7 @@ async function runOfflineTests() {
     } catch (error) {
         console.error(`❌ Erreur dans les tests: ${error.message}`);
     }
+    return true;
 }
 
 // Exécuter les tests si appelé directement

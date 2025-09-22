@@ -40,14 +40,17 @@ Tache.md                  # Planification et tâches projet
    ```bash
    npm install
    ```
-3. **Compiler les contrats**
-   ```bash
-   node scripts/compile.js
-   ```
-4. **Déployer les contrats**
-   - PatientIdentity : `node scripts/deploy-patient-contract.js`
-   - AccessControl : `node scripts/deploy-access-control.js`
-   - Système complet : `node scripts/deploy-complete-system.js`
+3. **Compilation des trois contrats**
+`node -e "import('./scripts/compile.js').then(m=>m.compileAllContracts())"`
+
+4. **Test en offline des contrats**
+   - PatientIdentityContract: `node -e "import('./scripts/test-offline.js').then(m=>m.runOfflineTests())"`
+   - AccessControlContract: `node -e "import('./scripts/test-access-control-offline.js').then(m=>m.testAccessControlSystem())"`
+   - MedicalRecordsContract: `node -e "import('./scripts/test-medical-records-offline.js').then(m=>m.testMedicalRecordsSystem())"`
+   - Les trois contrats à la fois: `node -e "import('./scripts/test-complete-system-offline.js').then(m=>m.testCompleteSystemOffline())"`
+
+5. **Déployer les contrats**
+   - Déployer les trois contrats:`node -e "import('./scripts/deploy-complete-system.js').then(m=>m.deployCompleteSystem())"`
 
 ## Utilisation
 

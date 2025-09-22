@@ -269,7 +269,7 @@ async function testAccessControlSystem() {
         const adminAddr = "0xADMIN123";
         const doctorAddr = "0xDOCTOR456";
         const nurseAddr = "0xNURSE789";
-        const patientAddr = "0xPATIENT001";
+        const patientAddr = "0xPATIENT1";
         
         // Enregistrer médecin
         accessControl.registerUser(
