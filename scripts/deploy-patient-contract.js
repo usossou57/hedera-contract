@@ -78,7 +78,7 @@ async function deployPatientContract() {
         
         const contractCreateTx = new ContractCreateFlow()
             .setBytecode(`0x${bytecode}`)
-            .setGas(300000) // Gas suffisant pour le déploiement
+            .setGas(5000000) // Gas suffisant pour le déploiement
             .setConstructorParameters(constructorParams)
             .setMaxTransactionFee(new Hbar(20));
 

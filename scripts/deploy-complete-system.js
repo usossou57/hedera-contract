@@ -6,7 +6,8 @@ import {
     ContractCreateFlow,
     ContractFunctionParameters,
     Hbar,
-    Status
+    Status,
+    AccountBalanceQuery
 } from "@hashgraph/sdk";
 import fs from 'fs';
 import path from 'path';
@@ -37,19 +38,21 @@ async function deployCompleteSystem() {
         const operatorPrivateKey = PrivateKey.fromStringECDSA(operatorKey);
         const client = Client.forTestnet()
             .setOperator(operatorId, operatorPrivateKey)
-            .setDefaultMaxTransactionFee(new Hbar(30)); // Plus de budget pour déploiements multiples
+            .setDefaultMaxTransactionFee(new Hbar(3000000000)); // Plus de budget pour déploiements multiples
         
         console.log("✅ Client Hedera connecté au testnet");
 
         // Vérifier le solde
         console.log("\n💰 Vérification du solde...");
-        const balance = await new AccountId(operatorId).getBalance(client);
-        console.log(`Solde actuel: ${balance.toString()}`);
+        const balance = await new AccountBalanceQuery()
+            .setAccountId(operatorId)
+            .execute(client);
+        console.log(`Solde actuel: ${balance.hbars.toString()}`);
         
-        if (balance.toBigNumber().lt(50)) { // Moins de 50 HBAR
-            console.warn("⚠️ Solde faible - le déploiement pourrait échouer");
-            console.log("💡 Obtenez plus de HBAR sur: https://portal.hedera.com/faucet");
-        }
+        //if (balance.toBigNumber().lt(50)) { // Moins de 50 HBAR
+        //    console.warn("⚠️ Solde faible - le déploiement pourrait échouer");
+        //    console.log("💡 Obtenez plus de HBAR sur: https://portal.hedera.com/faucet");
+        //}
 
         // Compilation de tous les contrats
         console.log("\n🔨 ÉTAPE 1/4: Compilation des contrats...");
@@ -137,9 +140,14 @@ async function deployCompleteSystem() {
         console.log("3. Configurez des médecins");
         console.log("4. Créez des dossiers médicaux");
         
-        const finalBalance = await new AccountId(operatorId).getBalance(client);
-        const cost = balance.toBigNumber().minus(finalBalance.toBigNumber());
-        console.log(`\n💰 Coût total du déploiement: ~${cost.dividedBy(100000000).toFixed(4)} HBAR`);
+        const finalBalance = await new AccountBalanceQuery()
+            .setAccountId(operatorId)
+            .execute(client);
+        const initialBalanceTinybars = balance.hbars.toTinybars();
+        const finalBalanceTinybars = finalBalance.hbars.toTinybars();
+        const costTinybars = initialBalanceTinybars - finalBalanceTinybars;
+        const costHbar = costTinybars / 100000000;
+        console.log(`\n💰 Coût total du déploiement: ~${costHbar.toFixed(4)} HBAR`);
         
         client.close();
         return systemConfig;
@@ -180,9 +188,8 @@ async function deployPatientIdentityContract(client) {
     
     const contractCreateTx = new ContractCreateFlow()
         .setBytecode(`0x${bytecode}`)
-        .setGas(300000)
-        .setConstructorParameters(constructorParams)
-        .setMaxTransactionFee(new Hbar(20));
+        .setGas(5000000)
+        .setConstructorParameters(constructorParams);
 
     console.log("  ⏳ Déploiement en cours...");
     const contractCreateSubmit = await contractCreateTx.execute(client);
@@ -212,14 +219,16 @@ async function deployAccessControlContract(client, patientContractId) {
     console.log(`  📊 Taille: ${bytecode.length / 2} bytes`);
     console.log(`  🔗 Lien avec PatientIdentity: ${patientContractId}`);
     
+    // Conversion de l'ID Hedera en adresse Ethereum (hexadécimal)
+    const { ContractId } = await import("@hashgraph/sdk");
+    const patientContractAddress = ContractId.fromString(patientContractId.toString()).toSolidityAddress();
     const constructorParams = new ContractFunctionParameters()
-        .addAddress(patientContractId.toString());
+        .addAddress(patientContractAddress);
     
     const contractCreateTx = new ContractCreateFlow()
         .setBytecode(`0x${bytecode}`)
-        .setGas(400000)
-        .setConstructorParameters(constructorParams)
-        .setMaxTransactionFee(new Hbar(25));
+        .setGas(5000000)
+        .setConstructorParameters(constructorParams);
 
     console.log("  ⏳ Déploiement en cours...");
     const contractCreateSubmit = await contractCreateTx.execute(client);
@@ -252,15 +261,18 @@ async function deployMedicalRecordsContract(client, patientContractId, accessCon
     console.log(`  🔗 Lien avec PatientIdentity: ${patientContractId}`);
     console.log(`  🔗 Lien avec AccessControl: ${accessControlId}`);
     
+    // Conversion des IDs Hedera en adresses Ethereum (hexadécimal)
+    const { ContractId } = await import("@hashgraph/sdk");
+    const patientContractAddress = ContractId.fromString(patientContractId.toString()).toSolidityAddress();
+    const accessControlAddress = ContractId.fromString(accessControlId.toString()).toSolidityAddress();
     const constructorParams = new ContractFunctionParameters()
-        .addAddress(patientContractId.toString())
-        .addAddress(accessControlId.toString());
+        .addAddress(patientContractAddress)
+        .addAddress(accessControlAddress);
     
     const contractCreateTx = new ContractCreateFlow()
         .setBytecode(`0x${bytecode}`)
-        .setGas(500000) // Plus de gas pour ce contrat complexe
-        .setConstructorParameters(constructorParams)
-        .setMaxTransactionFee(new Hbar(30));
+        .setGas(5000000) // Plus de gas pour ce contrat complexe
+        .setConstructorParameters(constructorParams);
 
     console.log("  ⏳ Déploiement en cours...");
     const contractCreateSubmit = await contractCreateTx.execute(client);

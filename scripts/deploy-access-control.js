@@ -50,8 +50,11 @@ async function deployAccessControlContract() {
         }
 
         const patientDeployment = JSON.parse(fs.readFileSync(patientDeploymentPath, 'utf8'));
-        const patientContractId = patientDeployment.contractId;
-        console.log(`✅ PatientIdentity trouvé: ${patientContractId}`);
+    const patientContractId = patientDeployment.contractId;
+    console.log(`✅ PatientIdentity trouvé: ${patientContractId}`);
+    // Conversion en adresse Ethereum (hexadécimal)
+    const { ContractId } = await import("@hashgraph/sdk");
+    const patientContractAddress = ContractId.fromString(patientContractId.toString()).toSolidityAddress();
 
         // Compilation
         console.log("\n🔨 Vérification de la compilation...");
@@ -79,7 +82,7 @@ async function deployAccessControlContract() {
         
         // Le constructeur prend l'adresse du contrat PatientIdentity
         const constructorParams = new ContractFunctionParameters()
-            .addAddress(patientContractId); // Adresse du contrat Patient
+            .addAddress(patientContractAddress); // Adresse du contrat Patient (format 0x...)
 
         console.log(`🔗 Lien avec PatientContract: ${patientContractId}`);
 
@@ -88,7 +91,7 @@ async function deployAccessControlContract() {
         
         const contractCreateTx = new ContractCreateFlow()
             .setBytecode(`0x${bytecode}`)
-            .setGas(400000) // Plus de gas pour ce contrat plus complexe
+            .setGas(5000000) // Plus de gas pour ce contrat plus complexe
             .setConstructorParameters(constructorParams)
             .setMaxTransactionFee(new Hbar(25));
 

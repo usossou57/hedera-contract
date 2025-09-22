@@ -52,6 +52,9 @@ Tache.md                  # Planification et tâches projet
 5. **Déployer les contrats**
    - Déployer les trois contrats:`node -e "import('./scripts/deploy-complete-system.js').then(m=>m.deployCompleteSystem())"`
 
+6. **Vérifier le solde du compte Hedera**
+`node scripts/checkBalance.js`
+
 ## Utilisation
 
 - **Créer un compte Hedera** : `node CreateAccountDemo.js`
